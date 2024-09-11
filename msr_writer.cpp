@@ -44,10 +44,19 @@ void write_card_loop() {
     while (keep_running) {
         try {
             write_card_once();
+            while (keep_running && MSR_Get_Write_Erase_Status() == 0) {
+                Sleep(100);
+            }
+            int write_status = MSR_Get_Write_Erase_Status();
+            if (write_status == '0') {
+                std::cout << "Card write successful" << std::endl;
+            } else {
+                std::cerr << "Card write failed with status: " << write_status << std::endl;
+            }
         } catch (const std::exception& e) {
             std::cerr << "Error: " << e.what() << std::endl;
         }
-        Sleep(100);
+        Sleep(1000);
     }
 }
 
@@ -74,7 +83,6 @@ void write_card_data(CardData& latest_data, std::vector<uint64_t>& masks) {
         if (status != '0') {
             throw std::runtime_error("Failed to write data to card" + std::to_string(status));
         }
-
         while (keep_running && MSR_Get_Write_Erase_Status() == 0) {
             Sleep(100);
         }
@@ -84,7 +92,6 @@ void write_card_data(CardData& latest_data, std::vector<uint64_t>& masks) {
         } else {
             std::cerr << "Card write failed with status: " << write_status << std::endl;
         }
-
     } catch (const std::exception& e) {
         std::cerr << "Error: " << e.what() << std::endl;
     }

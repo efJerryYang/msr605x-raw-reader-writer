@@ -38,7 +38,7 @@ int main() {
             switch (op) {
                 case Operation::READ:
                     std::cout << "Reading card..." << std::endl;
-                    read_card_once(true);
+                    read_card_once();
                     break;
                 case Operation::WRITE:
                     std::cout << "Writing card..." << std::endl;

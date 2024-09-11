@@ -60,8 +60,8 @@ public:
 
 // reader
 void init_reader_device();
-void read_card_once(bool terminal_only = false);
-void reader_main(bool terminal_only = false);
+void read_card_once();
+void reader_main();
 
 // writer
 void init_writer_device();
