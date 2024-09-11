@@ -19,12 +19,11 @@
 
 extern volatile sig_atomic_t keep_running;
 
-void setup_signal_handlers();
-std::string get_iso_timestamp();
-void init_device();
 void reset_and_exit_device();
-void print_track_data(const unsigned char* data, const char* track_name);
-std::string bytes_to_hex_string(const unsigned char* data, size_t length);
+void signal_handler(int signal);
+void setup_signal_handlers();
+void init_device();
+std::string get_iso_timestamp();
 
 class CardData {
 public:
@@ -60,12 +59,16 @@ public:
 };
 
 // reader
-void read_card_loop();
-void clear_track_data(unsigned char* TK1Dat, unsigned char* TK2Dat, unsigned char* TK3Dat);
-void read_card_data(unsigned char* TK1Dat, unsigned char* TK2Dat, unsigned char* TK3Dat);
+void init_reader_device();
+void read_card_once(bool terminal_only = false);
+void reader_main(bool terminal_only = false);
 
 // writer
-void write_card_loop();
-void write_card_data();
+void init_writer_device();
+void write_card_once();
+void writer_main();
+
+// New function to read mask from file
+std::vector<uint64_t> read_masks_from_file(const std::string& filename);
 
 #endif // MSR_COMMON_H
