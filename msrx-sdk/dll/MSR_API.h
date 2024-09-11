@@ -1,3 +1,8 @@
+#ifndef MSR_API_H
+#define MSR_API_H
+
+#include <windows.h>
+
 // Õ®”√API
 extern "C" __declspec(dllexport) void _stdcall MSR_GetDLL_Ver(char *rVER);
 extern "C" __declspec(dllexport) BOOL _stdcall MSR_InitComm(char *portname, unsigned long baud);
@@ -36,4 +41,4 @@ extern "C" __declspec(dllexport) int _stdcall MSR_DecodeTrack(char *AscBuff, uns
 extern "C" __declspec(dllexport) unsigned char _stdcall get_trackbyte(unsigned char bpc, unsigned char parity);
 extern "C" __declspec(dllexport) int _stdcall MSR_EncodeTrack(char *AscBuff, unsigned char *BinBuff, unsigned char bpc, unsigned char parity, unsigned char ss, unsigned char es);
 
-
+#endif // MSR_API_H
