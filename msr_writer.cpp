@@ -74,11 +74,11 @@ CardData read_latest_card_data() {
         } else if (current_record.timestamp.empty()) {
             current_record.timestamp = line;
         } else if (line.find("track1: ") == 0) {
-            current_record.track1 = line.substr(8);
+            current_record.setFromHexString(current_record.track1, line.substr(8));
         } else if (line.find("track2: ") == 0) {
-            current_record.track2 = line.substr(8);
+            current_record.setFromHexString(current_record.track2, line.substr(8));
         } else if (line.find("track3: ") == 0) {
-            current_record.track3 = line.substr(8);
+            current_record.setFromHexString(current_record.track3, line.substr(8));
         }
     }
 
@@ -100,23 +100,14 @@ void write_card_data() {
         try {
             CardData latest_data = read_latest_card_data();
 
-            // 确保每个磁道至少有100个十六进制字符
-            latest_data.track1 = pad_hex_string(latest_data.track1, 100);
-            latest_data.track2 = pad_hex_string(latest_data.track2, 100);
-            latest_data.track3 = pad_hex_string(latest_data.track3, 100);
-
-            std::string track1_data = hex_string_to_bytes(latest_data.track1);
-            std::string track2_data = hex_string_to_bytes(latest_data.track2);
-            std::string track3_data = hex_string_to_bytes(latest_data.track3);
-
             std::cout << "Try to write card data:" << std::endl;
-            std::cout << "track1[" << track1_data.length() << "]: " << latest_data.track1 << std::endl;
-            std::cout << "track2[" << track2_data.length() << "]: " << latest_data.track2 << std::endl;
-            std::cout << "track3[" << track3_data.length() << "]: " << latest_data.track3 << std::endl;
+            std::cout << "track1[" << latest_data.track1.size() << "]: " << latest_data.getHexString(latest_data.track1) << std::endl;
+            std::cout << "track2[" << latest_data.track2.size() << "]: " << latest_data.getHexString(latest_data.track2) << std::endl;
+            std::cout << "track3[" << latest_data.track3.size() << "]: " << latest_data.getHexString(latest_data.track3) << std::endl;
 
-            int status = MSR_Raw_Write((unsigned char*)track1_data.c_str(), 
-                (unsigned char*)track2_data.c_str(), 
-                (unsigned char*)track3_data.c_str());
+            int status = MSR_Raw_Write(latest_data.track1.data(), 
+                latest_data.track2.data(), 
+                latest_data.track3.data());
             if (status != '0') {
                 throw std::runtime_error("Failed to write data to card" + std::to_string(status));
             }

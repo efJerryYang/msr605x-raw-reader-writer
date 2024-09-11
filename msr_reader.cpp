@@ -1,6 +1,7 @@
 #include "msr_common.h"
 
 volatile sig_atomic_t keep_running = 1;
+bool terminal_only = false;
 
 void reset_and_exit_device() {
     static bool already_called = false;
@@ -67,9 +68,9 @@ void write_card_data_to_file(const CardData& card_data) {
     std::ofstream outfile("card-content.txt", std::ios::app);
     if (outfile.is_open()) {
         outfile << card_data.timestamp << std::endl;
-        outfile << "track1: " << card_data.track1 << std::endl;
-        outfile << "track2: " << card_data.track2 << std::endl;
-        outfile << "track3: " << card_data.track3 << std::endl;
+        outfile << "track1: " << card_data.getHexString(card_data.track1) << std::endl;
+        outfile << "track2: " << card_data.getHexString(card_data.track2) << std::endl;
+        outfile << "track3: " << card_data.getHexString(card_data.track3) << std::endl;
         outfile << std::endl;
         outfile.close();
     } else {
@@ -100,18 +101,19 @@ void read_card_data() {
             CardData card_data;
             card_data.timestamp = get_iso_timestamp();
             
-            size_t hex_length1, hex_length2, hex_length3;
-            card_data.track1 = bytes_to_hex_string(TK1Dat, TRACK_DATA_SIZE, hex_length1);
-            card_data.track2 = bytes_to_hex_string(TK2Dat, TRACK_DATA_SIZE, hex_length2);
-            card_data.track3 = bytes_to_hex_string(TK3Dat, TRACK_DATA_SIZE, hex_length3);
+            card_data.track1 = std::vector<unsigned char>(TK1Dat, TK1Dat + TRACK_DATA_SIZE);
+            card_data.track2 = std::vector<unsigned char>(TK2Dat, TK2Dat + TRACK_DATA_SIZE);
+            card_data.track3 = std::vector<unsigned char>(TK3Dat, TK3Dat + TRACK_DATA_SIZE);
 
             std::cout << "Timestamp: " << card_data.timestamp << std::endl;
-            std::cout << "track1[" << hex_length1 << "]: " << card_data.track1 << std::endl;
-            std::cout << "track2[" << hex_length2 << "]: " << card_data.track2 << std::endl;
-            std::cout << "track3[" << hex_length3 << "]: " << card_data.track3 << std::endl;
+            std::cout << "track1[" << card_data.track1.size() << "]: " << card_data.getHexString(card_data.track1) << std::endl;
+            std::cout << "track2[" << card_data.track2.size() << "]: " << card_data.getHexString(card_data.track2) << std::endl;
+            std::cout << "track3[" << card_data.track3.size() << "]: " << card_data.getHexString(card_data.track3) << std::endl;
             std::cout << std::endl;
 
-            write_card_data_to_file(card_data);
+            if (!terminal_only) {
+                write_card_data_to_file(card_data);
+            }
 
             // Reset for next read
             if (MSR_Raw_Read() != '0') {
@@ -124,8 +126,17 @@ void read_card_data() {
     }
 }
 
-int main() {
+int main(int argc, char* argv[]) {
     setup_signal_handlers();
+
+    // Check for command line argument
+    for (int i = 1; i < argc; i++) {
+        if (strcmp(argv[i], "-t") == 0) {
+            terminal_only = true;
+            std::cout << "Terminal-only mode activated. Data will not be written to file." << std::endl;
+            break;
+        }
+    }
 
     try {
         init_device();
