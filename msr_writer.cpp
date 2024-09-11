@@ -30,7 +30,12 @@ void init_device() {
     if (!MSR_InitComm(portname, 9600)) {
         throw std::runtime_error("Device initialization failed");
     }
-    std::cout << "Device initialized successfully" << std::endl;
+    
+    if (MSR_Set_HiCo() != '0') {
+        throw std::runtime_error("Failed to set HiCo mode");
+    }
+    
+    std::cout << "Device initialized successfully in HiCo mode" << std::endl;
 }
 
 std::string hex_string_to_bytes(const std::string& hex) {
@@ -41,6 +46,13 @@ std::string hex_string_to_bytes(const std::string& hex) {
         bytes.push_back(byte);
     }
     return bytes;
+}
+
+std::string pad_hex_string(const std::string& hex, size_t min_length) {
+    if (hex.length() >= min_length) {
+        return hex;
+    }
+    return hex + std::string(min_length - hex.length(), '0');
 }
 
 CardData read_latest_card_data() {
@@ -88,11 +100,16 @@ void write_card_data() {
         try {
             CardData latest_data = read_latest_card_data();
 
+            // 确保每个磁道至少有100个十六进制字符
+            latest_data.track1 = pad_hex_string(latest_data.track1, 100);
+            latest_data.track2 = pad_hex_string(latest_data.track2, 100);
+            latest_data.track3 = pad_hex_string(latest_data.track3, 100);
+
             std::string track1_data = hex_string_to_bytes(latest_data.track1);
             std::string track2_data = hex_string_to_bytes(latest_data.track2);
             std::string track3_data = hex_string_to_bytes(latest_data.track3);
 
-            std::cout << "Attempting to write card data:" << std::endl;
+            std::cout << "Try to write card data:" << std::endl;
             std::cout << "track1[" << track1_data.length() << "]: " << latest_data.track1 << std::endl;
             std::cout << "track2[" << track2_data.length() << "]: " << latest_data.track2 << std::endl;
             std::cout << "track3[" << track3_data.length() << "]: " << latest_data.track3 << std::endl;

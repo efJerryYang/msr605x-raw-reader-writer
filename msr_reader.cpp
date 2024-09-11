@@ -41,18 +41,26 @@ void init_device() {
     std::cout << "Device initialized successfully" << std::endl;
 }
 
+std::string pad_hex_string(const std::string& hex, size_t min_length) {
+    if (hex.length() >= min_length) {
+        return hex;
+    }
+    return hex + std::string(min_length - hex.length(), '0');
+}
+
 std::string bytes_to_hex_string(const unsigned char* data, size_t length, size_t& hex_length) {
     std::stringstream ss;
     ss << std::hex << std::uppercase << std::setfill('0');
     hex_length = 0;
     for (size_t i = 0; i < length; ++i) {
-        if (data[i] == 0 && data[i+1] == 0) {
-            break;
-        }
         ss << std::setw(2) << static_cast<int>(data[i]);
         hex_length += 2;
+        if (hex_length >= 100) break;  // 确保至少读取100个十六进制字符
     }
-    return ss.str();
+    std::string result = ss.str();
+    result = pad_hex_string(result, 100);  // 如果不足100个字符,用0填充
+    hex_length = result.length();
+    return result;
 }
 
 void write_card_data_to_file(const CardData& card_data) {
