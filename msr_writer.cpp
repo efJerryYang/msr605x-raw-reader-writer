@@ -100,6 +100,16 @@ void write_card_data() {
         try {
             CardData latest_data = read_latest_card_data();
 
+            // Define endian masks for each track
+            uint64_t track1_mask = 0x0000000000000000;
+            uint64_t track2_mask = 0xFFFFFFFFFFFFFFFE;
+            uint64_t track3_mask = 0xFFFFFFFFFFFFFFFE;
+
+            // Apply reverse endian
+            CardData::reverseEndian(latest_data.track1, track1_mask);
+            CardData::reverseEndian(latest_data.track2, track2_mask);
+            CardData::reverseEndian(latest_data.track3, track3_mask);
+
             std::cout << "Try to write card data:" << std::endl;
             std::cout << "track1[" << latest_data.track1.size() << "]: " << latest_data.getHexString(latest_data.track1) << std::endl;
             std::cout << "track2[" << latest_data.track2.size() << "]: " << latest_data.getHexString(latest_data.track2) << std::endl;

@@ -53,13 +53,12 @@ std::string bytes_to_hex_string(const unsigned char* data, size_t length, size_t
     std::stringstream ss;
     ss << std::hex << std::uppercase << std::setfill('0');
     hex_length = 0;
-    for (size_t i = 0; i < length; ++i) {
+    for (size_t i = 0; i < length; i++) {
         ss << std::setw(2) << static_cast<int>(data[i]);
         hex_length += 2;
-        if (hex_length >= 100) break;  // 确保至少读取100个十六进制字符
     }
     std::string result = ss.str();
-    result = pad_hex_string(result, 100);  // 如果不足100个字符,用0填充
+    result = pad_hex_string(result, TRACK_DATA_HEX_NUM_LIMIT);
     hex_length = result.length();
     return result;
 }
