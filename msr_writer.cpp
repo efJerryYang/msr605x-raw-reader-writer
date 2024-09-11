@@ -92,37 +92,14 @@ CardData read_latest_card_data() {
         throw std::runtime_error("No valid card data found in file");
     }
 
-    return records.back();  // 返回最后一条记录
+    return records.back();
 }
 
-void write_card_data() {
+void write_card_loop() {
     while (keep_running) {
         try {
-            CardData latest_data = read_latest_card_data();
+            write_card_data();
 
-            // Define endian masks for each track
-            uint64_t track1_mask = 0x0000000000000000;
-            uint64_t track2_mask = 0xFFFFFFFFFFFFFFFE;
-            uint64_t track3_mask = 0xFFFFFFFFFFFFFFFE;
-
-            // Apply reverse endian
-            CardData::reverseEndian(latest_data.track1, track1_mask);
-            CardData::reverseEndian(latest_data.track2, track2_mask);
-            CardData::reverseEndian(latest_data.track3, track3_mask);
-
-            std::cout << "Try to write card data:" << std::endl;
-            std::cout << "track1[" << latest_data.track1.size() << "]: " << latest_data.getHexString(latest_data.track1) << std::endl;
-            std::cout << "track2[" << latest_data.track2.size() << "]: " << latest_data.getHexString(latest_data.track2) << std::endl;
-            std::cout << "track3[" << latest_data.track3.size() << "]: " << latest_data.getHexString(latest_data.track3) << std::endl;
-
-            int status = MSR_Raw_Write(latest_data.track1.data(), 
-                latest_data.track2.data(), 
-                latest_data.track3.data());
-            if (status != '0') {
-                throw std::runtime_error("Failed to write data to card" + std::to_string(status));
-            }
-
-            // Wait for card swipe
             while (keep_running && MSR_Get_Write_Erase_Status() == 0) {
                 Sleep(100);
             }
@@ -133,12 +110,39 @@ void write_card_data() {
             } else {
                 std::cerr << "Card write failed with status: " << write_status << std::endl;
             }
-
-            Sleep(1000);
         } catch (const std::exception& e) {
             std::cerr << "Error: " << e.what() << std::endl;
-            Sleep(1000);
         }
+        Sleep(100);
+    }
+}
+
+void write_card_data() {
+    try {
+        CardData latest_data = read_latest_card_data();
+        // Define endian masks for each track
+        uint64_t track1_mask = 0x0000000000000000;
+        uint64_t track2_mask = 0xFFFFFFFFFFFFFFFE;
+        uint64_t track3_mask = 0xFFFFFFFFFFFFFFFE;
+
+        // Apply reverse endian
+        CardData::reverseEndian(latest_data.track1, track1_mask);
+        CardData::reverseEndian(latest_data.track2, track2_mask);
+        CardData::reverseEndian(latest_data.track3, track3_mask);
+
+        std::cout << "Try to write card data:" << std::endl;
+        std::cout << "track1[" << latest_data.track1.size() << "]: " << latest_data.getHexString(latest_data.track1) << std::endl;
+        std::cout << "track2[" << latest_data.track2.size() << "]: " << latest_data.getHexString(latest_data.track2) << std::endl;
+        std::cout << "track3[" << latest_data.track3.size() << "]: " << latest_data.getHexString(latest_data.track3) << std::endl;
+
+        int status = MSR_Raw_Write(latest_data.track1.data(), 
+            latest_data.track2.data(), 
+            latest_data.track3.data());
+        if (status != '0') {
+            throw std::runtime_error("Failed to write data to card" + std::to_string(status));
+        }
+    } catch (const std::exception& e) {
+        std::cerr << "Error: " << e.what() << std::endl;
     }
 }
 
@@ -147,7 +151,7 @@ int main() {
 
     try {
         init_device();
-        write_card_data();
+        write_card_loop();
     } catch (const std::exception& e) {
         std::cerr << "Error: " << e.what() << std::endl;
     }

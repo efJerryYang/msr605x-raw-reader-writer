@@ -83,52 +83,58 @@ void clear_track_data(unsigned char* TK1Dat, unsigned char* TK2Dat, unsigned cha
     memset(TK3Dat, 0, TRACK_DATA_SIZE);
 }
 
-void read_card_data() {
-    unsigned char TK1Dat[TRACK_DATA_SIZE] = {0}, TK2Dat[TRACK_DATA_SIZE] = {0}, TK3Dat[TRACK_DATA_SIZE] = {0};
-
+void read_card_loop() {
     if (MSR_Raw_Read() != '0') {
         throw std::runtime_error("Failed to start raw read mode");
     }
-
+    unsigned char TK1Dat[TRACK_DATA_SIZE] = {0}, TK2Dat[TRACK_DATA_SIZE] = {0}, TK3Dat[TRACK_DATA_SIZE] = {0};
     while (keep_running) {
-        clear_track_data(TK1Dat, TK2Dat, TK3Dat);
-
-        int status = MSR_Get_RawRead_Data(TK1Dat, TK2Dat, TK3Dat);
-        if (status == '0') {
-            std::cout << "Card read successfully" << std::endl;
-
-            CardData card_data;
-            card_data.timestamp = get_iso_timestamp();
-            
-            card_data.track1 = std::vector<unsigned char>(TK1Dat, TK1Dat + TRACK_DATA_SIZE);
-            card_data.track2 = std::vector<unsigned char>(TK2Dat, TK2Dat + TRACK_DATA_SIZE);
-            card_data.track3 = std::vector<unsigned char>(TK3Dat, TK3Dat + TRACK_DATA_SIZE);
-
-            std::cout << "Timestamp: " << card_data.timestamp << std::endl;
-            std::cout << "track1[" << card_data.track1.size() << "]: " << card_data.getHexString(card_data.track1) << std::endl;
-            std::cout << "track2[" << card_data.track2.size() << "]: " << card_data.getHexString(card_data.track2) << std::endl;
-            std::cout << "track3[" << card_data.track3.size() << "]: " << card_data.getHexString(card_data.track3) << std::endl;
-            std::cout << std::endl;
-
-            if (!terminal_only) {
-                write_card_data_to_file(card_data);
-            }
-
-            // Reset for next read
-            if (MSR_Raw_Read() != '0') {
-                throw std::runtime_error("Failed to restart raw read mode");
-            }
-        } else if (status != 0) {
-            std::cerr << "Error reading card" << std::endl;
+        // std::cout << "Reading card data..." << std::endl;
+        try {
+            read_card_data(TK1Dat, TK2Dat, TK3Dat);
+        } catch (const std::exception& e) {
+            std::cerr << "Error: " << e.what() << std::endl;
         }
-        Sleep(100); // Wait for 100ms before checking again
+        Sleep(100);
+    }
+}
+
+void read_card_data(unsigned char TK1Dat[TRACK_DATA_SIZE], unsigned char TK2Dat[TRACK_DATA_SIZE], unsigned char TK3Dat[TRACK_DATA_SIZE]) {
+    clear_track_data(TK1Dat, TK2Dat, TK3Dat);
+    int status = MSR_Get_RawRead_Data(TK1Dat, TK2Dat, TK3Dat);
+    CardData card_data;
+    if (status == '0') {
+        std::cout << "Card read successfully" << std::endl;
+
+        card_data.timestamp = get_iso_timestamp();
+        card_data.track1 = std::vector<unsigned char>(TK1Dat, TK1Dat + TRACK_DATA_SIZE);
+        card_data.track2 = std::vector<unsigned char>(TK2Dat, TK2Dat + TRACK_DATA_SIZE);
+        card_data.track3 = std::vector<unsigned char>(TK3Dat, TK3Dat + TRACK_DATA_SIZE);
+
+        std::cout << "Timestamp: " << card_data.timestamp << std::endl;
+        std::cout << "track1[" << card_data.track1.size() << "]: " << card_data.getHexString(card_data.track1) << std::endl;
+        std::cout << "track2[" << card_data.track2.size() << "]: " << card_data.getHexString(card_data.track2) << std::endl;
+        std::cout << "track3[" << card_data.track3.size() << "]: " << card_data.getHexString(card_data.track3) << std::endl;
+        std::cout << std::endl;
+
+        if (!terminal_only) {
+            write_card_data_to_file(card_data);
+        }
+
+        if (MSR_Raw_Read() != '0') {
+            throw std::runtime_error("Failed to start raw read mode");
+        }
+    } else if (status != 0) {
+        std::cerr << "Error reading card" << std::endl;
+    } else {
+        // std::cerr << "No card detected" << std::endl;
     }
 }
 
 int main(int argc, char* argv[]) {
     setup_signal_handlers();
 
-    // Check for command line argument
+    // cli args
     for (int i = 1; i < argc; i++) {
         if (strcmp(argv[i], "-t") == 0) {
             terminal_only = true;
@@ -139,7 +145,7 @@ int main(int argc, char* argv[]) {
 
     try {
         init_device();
-        read_card_data();
+        read_card_loop();
     } catch (const std::exception& e) {
         std::cerr << "Error: " << e.what() << std::endl;
     }

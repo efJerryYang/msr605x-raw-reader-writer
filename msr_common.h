@@ -59,4 +59,13 @@ public:
     }
 };
 
+// reader
+void read_card_loop();
+void clear_track_data(unsigned char* TK1Dat, unsigned char* TK2Dat, unsigned char* TK3Dat);
+void read_card_data(unsigned char* TK1Dat, unsigned char* TK2Dat, unsigned char* TK3Dat);
+
+// writer
+void write_card_loop();
+void write_card_data();
+
 #endif // MSR_COMMON_H
