@@ -49,12 +49,31 @@ public:
         }
     }
 
+    // reverse endian, actually not the case for MSR605X
     static void reverseEndian(std::vector<unsigned char>& data, uint64_t mask) {
         for (size_t i = 0; i < data.size() && i < TRACK_DATA_SIZE; i++) {
             if ((mask >> i) & 1) {
                 data[i] = ((data[i] & 0xF0) >> 4) | ((data[i] & 0x0F) << 4);
             }
         }
+    }
+
+    static void reverseByteBits(std::vector<unsigned char>& data, uint64_t mask) {
+        for (size_t i = 0; i < data.size() && i < TRACK_DATA_SIZE; i++) {
+            if ((mask >> i) & 1) {
+                data[i] = reverseBits(data[i]);
+            }
+        }
+    }
+
+private:
+    static unsigned char reverseBits(unsigned char byte) {
+        unsigned char reversed = 0;
+        for (int i = 0; i < 8; i++) {
+            reversed = (reversed << 1) | (byte & 1);
+            byte >>= 1;
+        }
+        return reversed;
     }
 };
 
