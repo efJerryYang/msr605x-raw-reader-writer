@@ -4,6 +4,8 @@
 
 unzip the `msrx-sdk.zip`, move the `MSR_API.dll` to the root directory
 
+**Note**: Make sure the 32-bit version of the compiler is used.
+
 ```powershell
 ./build.bat
 ```
