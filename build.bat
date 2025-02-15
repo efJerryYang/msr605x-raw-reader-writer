@@ -20,4 +20,14 @@ if %errorlevel% neq 0 (
     echo Compilation of writer.exe failed.
     exit /b %errorlevel%
 )
+
 echo Compilation of writer.exe successful.
+
+echo Compiling writer2.exe...
+g++ -std=c++11 -DWRITER_MAIN -mconsole -o writer2.exe msr_writer.cpp msr_common.o -L. -lMSR_API -luser32
+if %errorlevel% neq 0 (
+    echo Compilation of writer.exe failed.
+    exit /b %errorlevel%
+)
+
+echo Compilation of writer2.exe successful.
