@@ -1,4 +1,8 @@
 @echo off
+set "CC_PATH=%USERPROFILE%\Documents\Tools\mingw32\bin"
+set "PATH=%CC_PATH%;%PATH%"
+echo %PATH%
+
 echo Compiling msr_common.cpp...
 g++ -std=c++11 -c msr_common.cpp -o msr_common.o
 
