@@ -40,40 +40,18 @@ std::vector<uint64_t> read_masks_from_file(const std::string& filename) {
     std::ifstream file(filename);
     std::vector<uint64_t> masks;
     std::string line;
-    int line_number = 0;
     while (std::getline(file, line) && masks.size() < 3) {
-        line_number++;
         try {
-            uint64_t mask = 0;
-            if (line.substr(0, 2) == "0b") {
-                // binary
-                for (size_t i = line.length() - 1; i >= 2 && i < line.length(); --i) {
-                    mask = (mask << 1) | (line[i] == '1' ? 1 : 0);
-                    if (i == 2) break;
-                }
-            } else if (line.substr(0, 2) == "0x") {
-                // hexadecimal
-                for (size_t i = line.length() - 1; i >= 2 && i < line.length(); --i) {
-                    mask = (mask << 4) | (std::isdigit(line[i]) ? line[i] - '0' : 
-                           (std::tolower(line[i]) - 'a' + 10));
-                    if (i == 2) break;
-                }
-            } else {
-                // decimal
-                mask = std::stoull(line);
-            }
+            uint64_t mask = std::stoull(line, nullptr, 0);
             masks.push_back(mask);
             std::cout << "Successfully read mask: 0x" << std::hex << mask << std::dec << std::endl;
         } catch (const std::exception& e) {
-            std::cerr << "Error parsing line " << line_number << ": " << line << std::endl;
-            std::cerr << "Error details: " << e.what() << std::endl;
+            std::cerr << "Error parsing mask: " << line << " (" << e.what() << ")" << std::endl;
         }
-    }
-    if (masks.size() != 3) {
-        std::cerr << "Warning: Expected 3 masks, but read " << masks.size() << std::endl;
     }
     return masks;
 }
+
 
 void write_card_data() {
     while (keep_running) {
@@ -88,11 +66,13 @@ void write_card_data() {
             CardData::reverseByteBits(latest_data.track2, masks[1]);
             CardData::reverseByteBits(latest_data.track3, masks[2]);
 
+            std::fill(latest_data.track1.begin(), latest_data.track1.end(), 0x00);
             std::cout << "Try to write card data:" << std::endl;
             std::cout << "track1[" << latest_data.track1.size() << "]: " << latest_data.getHexString(latest_data.track1) << std::endl;
             std::cout << "track2[" << latest_data.track2.size() << "]: " << latest_data.getHexString(latest_data.track2) << std::endl;
             std::cout << "track3[" << latest_data.track3.size() << "]: " << latest_data.getHexString(latest_data.track3) << std::endl;
 
+            // set track 1 to zero
             int status = MSR_Raw_Write(latest_data.track1.data(), 
                                        latest_data.track2.data(), 
                                        latest_data.track3.data());
